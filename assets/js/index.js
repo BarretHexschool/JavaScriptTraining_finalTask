@@ -10,6 +10,7 @@ let cartId='';
 document.querySelector(".apiError").innerHTML = '';
 
 
+
 // 預設載入Data
 function getProductList(){
   axios.get(`${api_URL}/customer/${api_path}/products`)
@@ -76,6 +77,20 @@ function addToCart(productID){
 
 //取得購物車
 function getCartList(){
+  axios.get(`${api_URL}/customer/${api_path}/carts`)
+  .then((response) =>{
+    cart = response.data.carts;
+    reNewCarList(response.data)
+  })
+  .catch(function (error) {
+    document.querySelector(".apiError").innerHTML =
+      '<h3 class="apiError" style="color: red;font-weight: bolder;font-size: 2rem;">購物車取得失敗，請重新整理</h3>';
+  });
+}
+
+//重新渲染 購物車
+function reNewCarList(data){
+  const cartTable =  document.querySelector('.shoppingCart-table'); 
   let htmlCode = `  <tr>
   <th width="40%">品項</th>
   <th width="15%">單價</th>
@@ -83,22 +98,11 @@ function getCartList(){
   <th width="15%">金額</th>
   <th width="15%"></th>
 </tr>`;
-
-  const cartTable =  document.querySelector('.shoppingCart-table'); 
-
-  axios.get(`${api_URL}/customer/${api_path}/carts`)
-  .then((response) =>{
-    cart = response.data.carts;
-    cart.forEach((item) =>{
-      htmlCode += getCartHTMLStr(item);
-    })
-    htmlCode += getCartFinalHTMLStr(response.data);
-    cartTable.innerHTML = htmlCode;
-  })
-  .catch(function (error) {
-    document.querySelector(".apiError").innerHTML =
-      '<h3 class="apiError" style="color: red;font-weight: bolder;font-size: 2rem;">請重新加入產品</h3>';
-  });
+cart.forEach((item) =>{
+  htmlCode += getCartHTMLStr(item);
+})
+htmlCode += getCartFinalHTMLStr(data);
+cartTable.innerHTML = htmlCode;
 }
 
 // 尋找購物車是否有該商品
@@ -115,7 +119,8 @@ function getExitsProduct(productID){
 function addNewItem(addJson){
 axios.post(`${api_URL}/customer/${api_path}/carts`,addJson)
 .then(function (response){
-  getCartList();
+  cart = response.data.carts;
+  reNewCarList(response.data)
 })  
 .catch(function (error) {
   document.querySelector(".apiError").innerHTML =
@@ -131,7 +136,8 @@ function addExitItem(patchJson){
   .then(function (response){
     quantity = 0;
     cartId='';
-    getCartList();
+    cart = response.data.carts;
+    reNewCarList(response.data)
   })  
   .catch(function (error) {
     document.querySelector(".apiError").innerHTML =
@@ -192,6 +198,8 @@ function createOrder(){
     getProductList();
     alertInfo('orderSuccess');
     document.querySelector(".apiError").innerHTML = '';
+    //訂單資訊清空 
+    document.querySelector(".orderInfo-form").reset();
   })  
   .catch(function (error) {
     document.querySelector(".apiError").innerHTML =
